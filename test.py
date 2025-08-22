@@ -89,4 +89,4 @@ if st.button("채널 분석 시작"):
         else:
             st.error("채널 정보를 가져올 수 없습니다.")
     else:
-        st.error("채널 ID를 가져올 수 없습니다
+        st.error("채널 ID를 가져올 수 없습니다")
