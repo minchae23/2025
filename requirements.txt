@@ -6,4 +6,4 @@ plotly
 wordcloud
 beautifulsoup4
 requests
-
+selenium
