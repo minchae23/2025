@@ -1,31 +1,29 @@
 import streamlit as st
 import requests
-from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 import re
 
 # 🔑 본인의 YouTube Data API Key 입력
 API_KEY = "YOUR_YOUTUBE_API_KEY"
 
-# ----------------- 채널 ID 추출 ----------------- #
-def get_channel_id_from_url(url):
-    """
-    /channel/ 또는 /@username URL 모두 처리
-    """
-    # /channel/ URL
-    if "/channel/" in url:
-        return url.split("/channel/")[1].split("?")[0]
-    # /@username URL
-    elif "/@" in url:
-        try:
-            headers = {"User-Agent": "Mozilla/5.0"}
-            response = requests.get(url, headers=headers)
-            html = response.text
-            # HTML에서 channelId 찾기
-            match = re.search(r'"channelId":"(UC[0-9A-Za-z_-]{22})"', html)
-            if match:
-                return match.group(1)
-        except:
-            return None
+# ----------------- Selenium으로 채널 ID 추출 ----------------- #
+def get_channel_id_selenium(url):
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # 브라우저 없이 실행
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+
+    driver_path = "/path/to/chromedriver"  # ChromeDriver 경로 수정
+    driver = webdriver.Chrome(executable_path=driver_path, options=chrome_options)
+
+    driver.get(url)
+    html = driver.page_source
+    driver.quit()
+
+    match = re.search(r'"channelId":"(UC[0-9A-Za-z_-]{22})"', html)
+    if match:
+        return match.group(1)
     return None
 
 # ----------------- 채널 기본 정보 ----------------- #
@@ -65,7 +63,7 @@ def search_videos_by_keyword(channel_id, keyword, max_results=10):
 st.title("📊 유튜브 채널 분석기 & 키워드 영상 검색기")
 
 st.info(
-    "⚠️ URL만 입력하면 자동으로 채널 ID를 찾아 분석합니다.\n"
+    "URL만 넣으면 자동으로 채널 ID를 추출합니다.\n"
     "예: https://www.youtube.com/@kiatigerstv 또는 https://www.youtube.com/channel/UCxxxx..."
 )
 
@@ -75,7 +73,7 @@ if st.button("채널 분석 시작"):
     if not channel_url:
         st.error("URL을 입력해주세요.")
     else:
-        channel_id = get_channel_id_from_url(channel_url)
+        channel_id = get_channel_id_selenium(channel_url)
         if channel_id:
             data = get_channel_stats(channel_id)
             if data:
