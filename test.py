@@ -2,29 +2,35 @@ import streamlit as st
 import requests
 import re
 
-# 🔑 여기다가 본인 구글 클라우드에서 발급받은 API KEY 넣어야 함
+# 🔑 여기에 본인의 YouTube Data API Key 입력
 API_KEY = "YOUR_YOUTUBE_API_KEY"
 
-def extract_channel_id(url):
+# ----------------- 채널 ID 추출 ----------------- #
+def get_channel_id_from_url(url):
     """
-    유튜브 채널 URL에서 channel_id 추출
+    /channel/ 또는 /@username 형태 모두 처리
     """
     # /channel/ 형태
     match = re.search(r"channel/([A-Za-z0-9_-]+)", url)
     if match:
         return match.group(1)
+    
+    # /@username 형태
+    match = re.search(r"@([A-Za-z0-9_-]+)", url)
+    if match:
+        username = match.group(1)
+        api_url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q={username}&key={API_KEY}"
+        response = requests.get(api_url).json()
+        if "items" in response and len(response["items"]) > 0:
+            return response["items"][0]["snippet"]["channelId"]
     return None
 
+# ----------------- 채널 기본 정보 ----------------- #
 def get_channel_stats(channel_id):
-    """
-    유튜브 Data API v3에서 채널 기본 정보 가져오기
-    """
     url = f"https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id={channel_id}&key={API_KEY}"
     response = requests.get(url).json()
-
     if "items" not in response or len(response["items"]) == 0:
         return None
-
     item = response["items"][0]
     data = {
         "채널명": item["snippet"]["title"],
@@ -36,21 +42,51 @@ def get_channel_stats(channel_id):
     }
     return data
 
+# ----------------- 키워드 관련 영상 검색 ----------------- #
+def search_videos_by_keyword(channel_id, keyword, max_results=10):
+    url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&channelId={channel_id}&q={keyword}&type=video&maxResults={max_results}&key={API_KEY}"
+    response = requests.get(url).json()
+    videos = []
+    if "items" in response:
+        for item in response["items"]:
+            video_data = {
+                "제목": item["snippet"]["title"],
+                "영상 URL": f"https://www.youtube.com/watch?v={item['id']['videoId']}",
+                "게시일": item["snippet"]["publishedAt"][:10],
+                "썸네일": item["snippet"]["thumbnails"]["medium"]["url"]
+            }
+            videos.append(video_data)
+    return videos
+
 # ----------------- Streamlit UI ----------------- #
-st.title("📊 유튜브 채널 기본 정보 분석기")
+st.title("📊 유튜브 채널 분석기 & 키워드 영상 검색기")
 
 channel_url = st.text_input("유튜브 채널 URL을 입력하세요:")
 
 if st.button("채널 분석 시작"):
-    channel_id = extract_channel_id(channel_url)
+    channel_id = get_channel_id_from_url(channel_url)
     if channel_id:
+        # 채널 기본 정보
         data = get_channel_stats(channel_id)
         if data:
             st.subheader("🔎 채널 기본 정보")
             for k, v in data.items():
                 st.write(f"**{k}:** {v}")
+            
+            # 키워드 검색
+            keyword = st.text_input("검색할 키워드를 입력하세요:")
+            if keyword:
+                videos = search_videos_by_keyword(channel_id, keyword)
+                if videos:
+                    st.subheader(f"🎬 '{keyword}' 관련 영상 리스트")
+                    for video in videos:
+                        st.write(f"**제목:** {video['제목']}")
+                        st.write(f"**게시일:** {video['게시일']}")
+                        st.write(f"[영상 링크]({video['영상 URL']})")
+                        st.image(video['썸네일'])
+                else:
+                    st.info("해당 키워드 관련 영상이 없습니다.")
         else:
             st.error("채널 정보를 가져올 수 없습니다.")
     else:
-        st.error("URL에서 채널 ID를 추출할 수 없습니다. /channel/ 형태의 URL을 입력하세요.")
-
+        st.error("채널 ID를 가져올 수 없습니다
