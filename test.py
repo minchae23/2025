@@ -1,6 +1,6 @@
 import streamlit as st
 import requests
-import re
+from bs4 import BeautifulSoup
 
 # 🔑 여기에 본인의 YouTube Data API Key 입력
 API_KEY = "YOUR_YOUTUBE_API_KEY"
@@ -10,19 +10,20 @@ def get_channel_id_from_url(url):
     """
     /channel/ 또는 /@username 형태 모두 처리
     """
-    # /channel/ 형태
-    match = re.search(r"channel/([A-Za-z0-9_-]+)", url)
-    if match:
-        return match.group(1)
-    
-    # /@username 형태
-    match = re.search(r"@([A-Za-z0-9_-]+)", url)
-    if match:
-        username = match.group(1)
-        api_url = f"https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q={username}&key={API_KEY}"
-        response = requests.get(api_url).json()
-        if "items" in response and len(response["items"]) > 0:
-            return response["items"][0]["snippet"]["channelId"]
+    if "/channel/" in url:
+        return url.split("/channel/")[1].split("?")[0]
+    else:
+        # @username URL 처리
+        response = requests.get(url)
+        if response.status_code != 200:
+            return None
+        html = response.text
+        soup = BeautifulSoup(html, "html.parser")
+        # HTML 안에 channelId="UCxxxx..." 찾기
+        import re
+        match = re.search(r'"channelId":"(UC[0-9A-Za-z_-]{22})"', html)
+        if match:
+            return match.group(1)
     return None
 
 # ----------------- 채널 기본 정보 ----------------- #
@@ -89,4 +90,4 @@ if st.button("채널 분석 시작"):
         else:
             st.error("채널 정보를 가져올 수 없습니다.")
     else:
-        st.error("채널 ID를 가져올 수 없습니다")
+        st.error("채널 ID를 가져올 수 없습니다. URL을 다시 확인해주세요.")
