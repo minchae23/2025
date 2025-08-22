@@ -1,30 +1,8 @@
 import streamlit as st
 import requests
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-import re
 
 # 🔑 본인의 YouTube Data API Key 입력
 API_KEY = "YOUR_YOUTUBE_API_KEY"
-
-# ----------------- Selenium으로 채널 ID 추출 ----------------- #
-def get_channel_id_selenium(url):
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")  # 브라우저 없이 실행
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-
-    driver_path = "/path/to/chromedriver"  # ChromeDriver 경로 수정
-    driver = webdriver.Chrome(executable_path=driver_path, options=chrome_options)
-
-    driver.get(url)
-    html = driver.page_source
-    driver.quit()
-
-    match = re.search(r'"channelId":"(UC[0-9A-Za-z_-]{22})"', html)
-    if match:
-        return match.group(1)
-    return None
 
 # ----------------- 채널 기본 정보 ----------------- #
 def get_channel_stats(channel_id):
@@ -63,38 +41,35 @@ def search_videos_by_keyword(channel_id, keyword, max_results=10):
 st.title("📊 유튜브 채널 분석기 & 키워드 영상 검색기")
 
 st.info(
-    "URL만 넣으면 자동으로 채널 ID를 추출합니다.\n"
-    "예: https://www.youtube.com/@kiatigerstv 또는 https://www.youtube.com/channel/UCxxxx..."
+    "⚠️ Selenium 없이 실행 가능합니다.\n"
+    "UC로 시작하는 채널 ID를 입력해야 합니다.\n"
+    "예: UC_x5XG1OV2P6uZZ5FSM9Ttw"
 )
 
-channel_url = st.text_input("유튜브 채널 URL을 입력하세요:")
+channel_id = st.text_input("유튜브 채널 ID를 입력하세요 (UC로 시작)")
 
 if st.button("채널 분석 시작"):
-    if not channel_url:
-        st.error("URL을 입력해주세요.")
+    if not channel_id:
+        st.error("채널 ID를 입력해주세요.")
     else:
-        channel_id = get_channel_id_selenium(channel_url)
-        if channel_id:
-            data = get_channel_stats(channel_id)
-            if data:
-                st.subheader("🔎 채널 기본 정보")
-                for k, v in data.items():
-                    st.write(f"**{k}:** {v}")
+        data = get_channel_stats(channel_id)
+        if data:
+            st.subheader("🔎 채널 기본 정보")
+            for k, v in data.items():
+                st.write(f"**{k}:** {v}")
 
-                # 키워드 검색
-                keyword = st.text_input("검색할 키워드를 입력하세요:")
-                if keyword:
-                    videos = search_videos_by_keyword(channel_id, keyword)
-                    if videos:
-                        st.subheader(f"🎬 '{keyword}' 관련 영상 리스트")
-                        for video in videos:
-                            st.write(f"**제목:** {video['제목']}")
-                            st.write(f"**게시일:** {video['게시일']}")
-                            st.write(f"[영상 링크]({video['영상 URL']})")
-                            st.image(video['썸네일'])
-                    else:
-                        st.info("해당 키워드 관련 영상이 없습니다.")
-            else:
-                st.error("채널 정보를 가져올 수 없습니다. API Key 또는 URL을 확인해주세요.")
+            # 키워드 검색
+            keyword = st.text_input("검색할 키워드를 입력하세요:")
+            if keyword:
+                videos = search_videos_by_keyword(channel_id, keyword)
+                if videos:
+                    st.subheader(f"🎬 '{keyword}' 관련 영상 리스트")
+                    for video in videos:
+                        st.write(f"**제목:** {video['제목']}")
+                        st.write(f"**게시일:** {video['게시일']}")
+                        st.write(f"[영상 링크]({video['영상 URL']})")
+                        st.image(video['썸네일'])
+                else:
+                    st.info("해당 키워드 관련 영상이 없습니다.")
         else:
-            st.error("채널 ID를 추출할 수 없습니다. URL을 다시 확인해주세요.")
+            st.error("채널 정보를 가져올 수 없습니다. API Key 또는 채널 ID를 확인해주세요.")
