@@ -1,30 +1,8 @@
 import streamlit as st
 import requests
-from bs4 import BeautifulSoup
 
 # 🔑 여기에 본인의 YouTube Data API Key 입력
 API_KEY = "YOUR_YOUTUBE_API_KEY"
-
-# ----------------- 채널 ID 추출 ----------------- #
-def get_channel_id_from_url(url):
-    """
-    /channel/ 또는 /@username 형태 모두 처리
-    """
-    if "/channel/" in url:
-        return url.split("/channel/")[1].split("?")[0]
-    else:
-        # @username URL 처리
-        response = requests.get(url)
-        if response.status_code != 200:
-            return None
-        html = response.text
-        soup = BeautifulSoup(html, "html.parser")
-        # HTML 안에 channelId="UCxxxx..." 찾기
-        import re
-        match = re.search(r'"channelId":"(UC[0-9A-Za-z_-]{22})"', html)
-        if match:
-            return match.group(1)
-    return None
 
 # ----------------- 채널 기본 정보 ----------------- #
 def get_channel_stats(channel_id):
@@ -62,32 +40,30 @@ def search_videos_by_keyword(channel_id, keyword, max_results=10):
 # ----------------- Streamlit UI ----------------- #
 st.title("📊 유튜브 채널 분석기 & 키워드 영상 검색기")
 
-channel_url = st.text_input("유튜브 채널 URL을 입력하세요:")
+st.info("⚠️ 주의: @username URL 대신 **채널 ID**를 입력해야 합니다. 예: UC_x5XG1OV2P6uZZ5FSM9Ttw")
 
-if st.button("채널 분석 시작"):
-    channel_id = get_channel_id_from_url(channel_url)
-    if channel_id:
-        # 채널 기본 정보
-        data = get_channel_stats(channel_id)
-        if data:
-            st.subheader("🔎 채널 기본 정보")
-            for k, v in data.items():
-                st.write(f"**{k}:** {v}")
-            
-            # 키워드 검색
-            keyword = st.text_input("검색할 키워드를 입력하세요:")
-            if keyword:
-                videos = search_videos_by_keyword(channel_id, keyword)
-                if videos:
-                    st.subheader(f"🎬 '{keyword}' 관련 영상 리스트")
-                    for video in videos:
-                        st.write(f"**제목:** {video['제목']}")
-                        st.write(f"**게시일:** {video['게시일']}")
-                        st.write(f"[영상 링크]({video['영상 URL']})")
-                        st.image(video['썸네일'])
-                else:
-                    st.info("해당 키워드 관련 영상이 없습니다.")
-        else:
-            st.error("채널 정보를 가져올 수 없습니다.")
+channel_id = st.text_input("유튜브 채널 ID를 입력하세요:")
+
+if st.button("채널 분석 시작") and channel_id:
+    # 채널 기본 정보
+    data = get_channel_stats(channel_id)
+    if data:
+        st.subheader("🔎 채널 기본 정보")
+        for k, v in data.items():
+            st.write(f"**{k}:** {v}")
+        
+        # 키워드 검색
+        keyword = st.text_input("검색할 키워드를 입력하세요:")
+        if keyword:
+            videos = search_videos_by_keyword(channel_id, keyword)
+            if videos:
+                st.subheader(f"🎬 '{keyword}' 관련 영상 리스트")
+                for video in videos:
+                    st.write(f"**제목:** {video['제목']}")
+                    st.write(f"**게시일:** {video['게시일']}")
+                    st.write(f"[영상 링크]({video['영상 URL']})")
+                    st.image(video['썸네일'])
+            else:
+                st.info("해당 키워드 관련 영상이 없습니다.")
     else:
-        st.error("채널 ID를 가져올 수 없습니다. URL을 다시 확인해주세요.")
+        st.error("채널 정보를 가져올 수 없습니다. 채널 ID를 확인해주세요.")
