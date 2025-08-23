@@ -7,3 +7,4 @@ wordcloud
 beautifulsoup4
 requests
 selenium
+google-api-python-client
