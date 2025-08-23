@@ -11,13 +11,12 @@ st.set_page_config(
 )
 
 # 화면 타이틀과 안내
-st.markdown("## 📌 첫 번째 채널 ID만 넣으세요")
-st.markdown("채널 URL이나 UC로 시작하는 채널 ID를 입력하면 구독자 수와 채널 정보를 확인할 수 있어요!")
+st.markdown("## 📌채널 ID만 넣으세요")
+st.markdown("UC로 시작하는 채널 ID를 입력하면 구독자 수와 채널 정보를 확인할 수 있어요!")
 
 # 입력창
 api_key = st.text_input("🔑 API Key 입력", type="password")
-channel_input = st.text_input("💻 채널 URL 또는 ID 입력", "https://www.youtube.com/@kiatigerstv")
-
+channel_input = st.text_input("💻채널 ID 입력")
 def get_channel_id(channel_input):
     """@사용자이름 또는 채널 URL을 실제 UC로 시작하는 채널 ID로 변환"""
     if channel_input.startswith("UC"):
@@ -41,7 +40,7 @@ if api_key and channel_input:
     channel_id = get_channel_id(channel_input)
     
     if not channel_id:
-        st.error("⚠️ 유효하지 않은 채널입니다. UC로 시작하는 채널 ID 또는 올바른 @사용자이름 입력 필요")
+        st.error("⚠️ 유효하지 않은 채널입니다. UC로 시작하는 채널 ID를 입력해주세요")
     else:
         try:
             youtube = build('youtube', 'v3', developerKey=api_key)
