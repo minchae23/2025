@@ -38,7 +38,7 @@ st.markdown(
 # -----------------------------
 # 타이틀 & 안내 문구
 # -----------------------------
-st.markdown("<h2>📌 유튜브 탐색기</h2>", unsafe_allow_html=True)
+st.markdown("<h2>📌채널 ID를 넣으면 채널의 정보를 볼 수 있어요! 그리고 키워드를 작성하면 키워드와 관련된 영상들이 추천 됩니다! ฅʕ •Ⱉ• ⠕ʔฅ </h2>", unsafe_allow_html=True)
 st.markdown(
     "채널 ID를 넣으면 채널의 정보를 볼 수 있어요! 그리고 키워드를 작성하면 키워드와 관련된 영상들이 추천 됩니다! ฅʕ •Ⱉ• ⠕ʔฅ",
     unsafe_allow_html=True
