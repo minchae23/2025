@@ -3,14 +3,21 @@ from googleapiclient.discovery import build
 import requests
 import re
 
+# -----------------------------
 # 페이지 설정
+# -----------------------------
 st.set_page_config(
     page_title="📺 유튜브 탐색기",
     page_icon="🎬",
     layout="wide"
 )
 
-# 배경색 스타일링
+# 하드코딩된 API Key (사용자에게 절대 노출되지 않음)
+API_KEY = "AIzaSyCaL-ueb_PHj8j_4WgAol4thJMcwQF55Vc"
+
+# -----------------------------
+# 스타일링 (유튜브 알고리즘 느낌)
+# -----------------------------
 st.markdown(
     """
     <style>
@@ -28,23 +35,31 @@ st.markdown(
     """, unsafe_allow_html=True
 )
 
-# 타이틀
-st.markdown("<h2>📌 채널 ID를 넣으면 채널의 정보를 볼 수 있어요! 그리고 키워드를 작성하면 키워드와 관련된 영상들이 추천 됩니다!</h2>", unsafe_allow_html=True)
-st.write("채널 ID를 입력하면 구독자 수와 채널 정보를 확인할 수 있어요!")
+# -----------------------------
+# 타이틀 & 안내 문구
+# -----------------------------
+st.markdown("<h2>📌 유튜브 탐색기</h2>", unsafe_allow_html=True)
+st.markdown(
+    "채널 ID를 넣으면 채널의 정보를 볼 수 있어요! 그리고 키워드를 작성하면 키워드와 관련된 영상들이 추천 됩니다! ฅʕ •Ⱉ• ⠕ʔฅ",
+    unsafe_allow_html=True
+)
 
-# 입력창
-api_key = st.text_input("🔑 API Key 입력", type="password")
+# -----------------------------
+# 사용자 입력창
+# -----------------------------
 channel_input = st.text_input("💻 채널 ID를 입력하세요!", "UC_xxxxxxxx")
-
 keyword_search = st.text_input("🔍 키워드 검색 (예: 오선우)")
 
+# -----------------------------
+# 채널 ID 가져오기 함수
+# -----------------------------
 def get_channel_id(channel_input):
     if channel_input.startswith("UC"):
         return channel_input
     match = re.search(r"@([a-zA-Z0-9_-]+)", channel_input)
     if match:
         username = match.group(1)
-        url = f"https://www.googleapis.com/youtube/v3/channels?part=id&forUsername={username}&key={api_key}"
+        url = f"https://www.googleapis.com/youtube/v3/channels?part=id&forUsername={username}&key={API_KEY}"
         try:
             response = requests.get(url).json()
             if 'items' in response and len(response['items']) > 0:
@@ -55,13 +70,16 @@ def get_channel_id(channel_input):
             return None
     return None
 
-if api_key and channel_input:
+# -----------------------------
+# 채널 정보 가져오기
+# -----------------------------
+if channel_input:
     channel_id = get_channel_id(channel_input)
     if not channel_id:
         st.error("⚠️ 유효하지 않은 채널입니다.")
     else:
         try:
-            youtube = build('youtube', 'v3', developerKey=api_key)
+            youtube = build('youtube', 'v3', developerKey=API_KEY)
             request = youtube.channels().list(part="snippet,statistics", id=channel_id)
             response = request.execute()
 
@@ -74,6 +92,9 @@ if api_key and channel_input:
                 description = channel_info['snippet']['description']
                 thumbnail = channel_info['snippet']['thumbnails']['high']['url']
 
+                # -----------------------------
+                # 채널 카드 표시
+                # -----------------------------
                 st.markdown('<div class="channel-card">', unsafe_allow_html=True)
                 st.markdown(f"### 📺 {channel_name}")
                 st.image(thumbnail, width=180)
@@ -84,10 +105,12 @@ if api_key and channel_input:
         except Exception as e:
             st.error(f"⚠️ 채널 정보를 가져오는 중 오류 발생: {e}")
 
+# -----------------------------
 # 키워드 검색
-if api_key and keyword_search:
+# -----------------------------
+if keyword_search:
     try:
-        youtube = build('youtube', 'v3', developerKey=api_key)
+        youtube = build('youtube', 'v3', developerKey=API_KEY)
         search_request = youtube.search().list(
             q=keyword_search,
             part="snippet",
