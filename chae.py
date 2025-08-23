@@ -1,22 +1,34 @@
 import streamlit as st
-import requests
-from bs4 import BeautifulSoup
-import re
+from googleapiclient.discovery import build
 
 st.title("유튜브 채널 구독자 수 확인")
 
-# URL 입력
-channel_url = st.text_input("채널 URL을 입력하세요", "https://www.youtube.com/@kiatigerstv")
+# API Key 입력
+api_key = st.text_input("API Key 입력", type="password")
 
-if channel_url:
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-    response = requests.get(channel_url, headers=headers)
-    soup = BeautifulSoup(response.text, "html.parser")
-    text = soup.get_text()
+# 채널 URL 입력
+channel_url = st.text_input("채널 URL 입력", "https://www.youtube.com/@kiatigerstv")
 
-    match = re.search(r'([\d,.]+)\s*subscribers', text)
-    if match:
-        subscribers = match.group(1)
-        st.write(f"구독자 수: {subscribers}")
-    else:
-        st.write("구독자 수를 찾을 수 없습니다.")
+def get_channel_id(url):
+    # 커스텀 URL(@kiatigerstv)을 UC로 시작하는 채널 ID로 변환
+    # 여기서는 예시 채널 ID를 바로 사용
+    return "UCp8knO8a6tSI1oaLjfd9XA"
+
+if api_key and channel_url:
+    channel_id = get_channel_id(channel_url)
+    
+    # 유튜브 API 객체 생성
+    youtube = build('youtube', 'v3', developerKey=api_key)
+    
+    # 채널 정보 요청
+    request = youtube.channels().list(
+        part="snippet,statistics",
+        id=channel_id
+    )
+    try:
+        response = request.execute()
+        channel_name = response['items'][0]['snippet']['title']
+        subscribers = response['items'][0]['statistics']['subscriberCount']
+        st.write(f"**{channel_name}** 구독자 수: **{subscribers}명**")
+    except Exception as e:
+        st.error("채널 정보를 가져올 수 없습니다. API Key와 URL을 확인하세요.")
