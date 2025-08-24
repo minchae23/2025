@@ -108,4 +108,3 @@ if keyword:
         st.warning("관련 영상을 찾을 수 없습니다.")
 
 st.markdown('</div>', unsafe_allow_html=True)
-``
