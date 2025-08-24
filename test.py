@@ -65,7 +65,7 @@ st.markdown("""
 
 # 🔲 좌측 사이드바 (고정 메뉴)
 st.markdown("""
-    <div style="width:200px; position:fixed; top:60px; left:0; height:100%; background:#fff; border-right:1px solid #ddd; padding:15px;">
+    <div style="width:220px; position:fixed; top:60px; left:0; height:100%; background:#fff; border-right:1px solid #ddd; padding:15px;">
         <p>🏠 홈</p>
         <p>🎬 Shorts</p>
         <p>📺 구독</p>
@@ -76,43 +76,13 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# 🟥 메인 영역
-st.markdown('<div style="margin-left:220px; padding:20px;">', unsafe_allow_html=True)
+# 🟥 메인 영역 (여백 늘려서 겹침 방지)
+st.markdown('<div style="margin-left:260px; padding:20px;">', unsafe_allow_html=True)
 
-# 입력창
+# 입력창은 항상 고정됨
 channel_id = st.text_input("🔑 채널 ID 입력", "")
 keyword = st.text_input("🔍 키워드 입력", "")
 
 # 채널 정보 출력
 if channel_id:
-    info = get_channel_info(channel_id)
-    if info:
-        st.markdown(f"""
-            <div style="background:#fff; border-radius:15px; padding:20px; box-shadow:0 4px 10px rgba(0,0,0,0.1); margin-bottom:20px;">
-                <img src="{info['thumbnail']}" style="border-radius:50%; width:100px;"><br>
-                <h2>{info['title']}</h2>
-                <p>👥 구독자 {info['subscribers']}명 | ▶ 영상 {info['videos']}개 | 👁️ 조회수 {info['views']}</p>
-                <p>📝 {info['description']}</p>
-            </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.error("⚠️ 유효하지 않은 채널 ID입니다.")
-
-# 키워드 관련 영상 출력
-if keyword:
-    videos = search_videos(keyword)
-    if videos:
-        st.markdown("<h2>🎥 추천 영상</h2>", unsafe_allow_html=True)
-        cols = st.columns(3)
-        for idx, video in enumerate(videos):
-            with cols[idx % 3]:
-                st.markdown(f"""
-                    <div style="background:#fff; padding:10px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); margin-bottom:20px;">
-                        <a href="https://www.youtube.com/watch?v={video['videoId']}" target="_blank">
-                            <img src="{video['thumbnail']}" style="width:100%; border-radius:10px;">
-                        </a>
-                        <p>{video['title']}</p>
-                    </div>
-                """, unsafe_allow_html=True)
-
-st.markdown("</div>", unsafe_allow_html=True)
+    info = get_channel_info(chann
